@@ -1,4 +1,4 @@
-N_FILES_MAX_PER_SAMPLE = -1
+N_FILES_MAX_PER_SAMPLE = 1
 download_sleep = 0
 url_prefix = "root://eospublic.cern.ch//eos/opendata"
 #In order to run analysis from Nebraska use this prefix
@@ -49,11 +49,12 @@ def get_items(json_file):
 
 rule all:
     input:
-        "histograms_merged.root"
+        "histograms.root",
+        "workspace.json"
 
 rule process_sample_one_file_in_sample:
     container:
-        "docker.io/reanahub/reana-demo-agc-cmc-ttbar-coffea:1.0.0"
+        "povstenandrii/ttbarkerberos:20240311"
     resources:
         kubernetes_memory_limit="3700Mi"
     input:
@@ -67,7 +68,7 @@ rule process_sample_one_file_in_sample:
 
 rule process_sample:
     container:
-        "docker.io/reanahub/reana-demo-agc-cms-ttbar-coffea:1.0.0"
+        "povstenandrii/ttbarkerberos:20240311"
     resources:
         kubernetes_memory_limit="1850Mi"
     input:
@@ -82,7 +83,7 @@ rule process_sample:
 
 rule merging_histograms:
     container:
-        "docker.io/reanahub/reana-demo-agc-cms-ttbar-coffea:1.0.0"
+        "povstenandrii/ttbarkerberos:20240311"
     resources:
         kubernetes_memory_limit="1850Mi"
     input:
@@ -97,7 +98,8 @@ rule merging_histograms:
         "everything_merged_wjets__nominal.root",
         "final_merging.ipynb"
     output:
-        "histograms_merged.root"
+        "histograms.root",
+        "workspace.json"
     shell:
         "/bin/bash -l && source fix-env.sh && papermill final_merging.ipynb result_notebook.ipynb -k python3"
 
