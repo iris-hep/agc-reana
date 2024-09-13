@@ -16,4 +16,4 @@ workflow:
       - name: ServiceX-AGC External Data Request
         environment: "povstenandrii/servicex-image:20240618"
         commands:
-         - /bin/bash -l && source fix-env.sh && papermill ${notebook} ServiceX_ouotput_data.ipynb -k python3
+         - /bin/bash -l && source fix-env.sh && papermill ${notebook} ServiceX_output_data.ipynb -k python3
