@@ -1,11 +1,7 @@
-N_FILES_MAX_PER_SAMPLE = -1
-download_sleep = 0
-url_prefix = "root://eospublic.cern.ch//eos/opendata"
-#In order to run analysis from Nebraska use this prefix
-#url_prefix = "https://xrootd-local.unl.edu:1094//" 
-import glob
 import json
 import os
+N_FILES_MAX_PER_SAMPLE = 1
+# Function to extract samples from JSON and generate the necessary .txt files
 def extract_samples_from_json(json_file):
     output_files = []
     
@@ -14,38 +10,27 @@ def extract_samples_from_json(json_file):
 
         for sample, conditions in data.items():
             for condition, details in conditions.items():
+                # Creating a filename for the sample and condition
                 sample_name = f"{sample}__{condition}"
-                output_files.append(sample_name)
+                output_files.append((sample, condition))
+                
+                # Write paths to a .txt file with the correct path replacement
                 with open(f"sample_{sample_name}_paths.txt", "w") as path_file:
-                    paths = [file_info["path"].replace("https://xrootd-local.unl.edu:1094//store/user/AGC/nanoAOD",
-                                                       "root://eospublic.cern.ch//eos/opendata/cms/upload/agc/1.0.0/") for file_info in details["files"]]
+                    paths = [file_info["path"] for file_info in details["files"]]
                     path_file.write("\n".join(paths))
-
     return output_files
-    
+
+# Function to get file paths based on the index
 def get_file_paths(wildcards, max=N_FILES_MAX_PER_SAMPLE):
-    "Return list of at most MAX file paths for the given SAMPLE."
-    import json
-    import os
+    "Return list of at most MAX file paths for the given SAMPLE and CONDITION."
     filepaths = []
-    fd = open(f"sample_{wildcards.sample}__{wildcards.condition}_paths.txt")
-    filepaths = fd.read().splitlines()
-    fd.close()
-    return [f"histograms/histograms_{wildcards.sample}__{wildcards.condition}__"+filepath[38:] for filepath in filepaths][:max] 
-
-samples = extract_samples_from_json("nanoaod_inputs.json")
-
-def get_items(json_file):
-    samples = []
+    with open(f"sample_{wildcards.sample}__{wildcards.condition}_paths.txt", "r") as fd:
+        filepaths = fd.read().splitlines()
     
-    with open(json_file, "r") as fd:
-        data = json.load(fd)
-        
-        for sample, conditions in data.items():
-            for condition in conditions:
-                samples.append((sample, condition))
-    
-    return samples 
+    # Use the index as the wildcard, creating a path for each file based on its index
+    return [f"histograms/histograms_{wildcards.sample}__{wildcards.condition}__{index}.root" for index in range(len(filepaths))][:max]
+
+sample_conditions = extract_samples_from_json("file_inputs_servicex.json")
 
 rule all:
     input:
@@ -53,21 +38,21 @@ rule all:
 
 rule process_sample_one_file_in_sample:
     container:
-        "docker.io/reanahub/reana-demo-agc-cmc-ttbar-coffea:1.0.0"
+        "povstenandrii/ttbarkerberos:20240311"
     resources:
-        kubernetes_memory_limit="3700Mi"
+        kubernetes_memory_limit="8000Mi"
     input:
         "ttbar_analysis_reana.ipynb"
     output:
-        "histograms/histograms_{sample}__{condition}__{filename}"
+        "histograms/histograms_{sample}__{condition}__{index}.root"
     params:
         sample_name = '{sample}__{condition}'
     shell:
-        "/bin/bash -l && source fix-env.sh && python prepare_workspace.py sample_{params.sample_name}_{wildcards.filename} && papermill ttbar_analysis_reana.ipynb sample_{params.sample_name}_{wildcards.filename}_out.ipynb -p sample_name {params.sample_name} -p filename {url_prefix}{wildcards.filename} -k python3"
+        "/bin/bash -l && source fix-env.sh && python prepare_workspace.py sample_{params.sample_name}_{wildcards.index} && papermill ttbar_analysis_reana.ipynb sample_{params.sample_name}_{wildcards.index}_out.ipynb -p sample_name {params.sample_name} -p index {wildcards.index} -k python3"
 
 rule process_sample:
     container:
-        "docker.io/reanahub/reana-demo-agc-cms-ttbar-coffea:1.0.0"
+        "povstenandrii/merged_povsten:20240215"
     resources:
         kubernetes_memory_limit="1850Mi"
     input:
@@ -78,11 +63,11 @@ rule process_sample:
     params:
         sample_name = '{sample}__{condition}'
     shell:
-        "/bin/bash -l && source fix-env.sh && papermill file_merging.ipynb merged_{params.sample_name}.ipynb -p sample_name {params.sample_name} -k python3"
+        "papermill file_merging.ipynb merged_{params.sample_name}.ipynb -p sample_name {params.sample_name} -k python3"
 
 rule merging_histograms:
     container:
-        "docker.io/reanahub/reana-demo-agc-cms-ttbar-coffea:1.0.0"
+        "povstenandrii/ttbarkerberos:20240311"
     resources:
         kubernetes_memory_limit="1850Mi"
     input:
@@ -100,5 +85,3 @@ rule merging_histograms:
         "histograms_merged.root"
     shell:
         "/bin/bash -l && source fix-env.sh && papermill final_merging.ipynb result_notebook.ipynb -k python3"
-
-    

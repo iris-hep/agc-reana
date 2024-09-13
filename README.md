@@ -2,31 +2,14 @@
 
 ## About
 
-This demo shows the submission of [AGC](https://arxiv.org/abs/1010.2506) - Analysis Grand Challenge
-to the [REANA](http://www.reana.io/) using the Snakemake as an workflow engine.
-
-### Analysis Grand Challenge
-
-For full explanation please have a look at this documentation:
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7274936.svg)](https://doi.org/10.5281/zenodo.7274936)
-[![Documentation Status](https://readthedocs.org/projects/agc/badge/?version=latest)](https://agc.readthedocs.io/en/latest/?badge=latest)
-
-The Analysis Grand Challenge (AGC) is about performing the last steps in an analysis pipeline at scale to test workflows envisioned for the HL-LHC.
-This includes
-
-- columnar data extraction from large datasets,
-- processing of that data (event filtering, construction of observables, evaluation of systematic uncertainties) into histograms,
-- statistical model construction and statistical inference,
-- relevant visualizations for these steps,
-
-The physics analysis task is a $t\bar{t}$ cross-section measurement with 2015 CMS Open Data (see `datasets/cms-open-data-2015`).
-The current reference implementation can be found in `analyses/cms-open-data-ttbar`.
+This branch allows to request and prcess AGC files using [ServiceX](https://github.com/ssl-hep/ServiceX) data delivery tool 
+together with [REANA](http://www.reana.io/) using the Snakemake as an workflow engine.
 
 ### Analysis Structure
 
 ### 1. Input data 
 
-We are using [2015 CMS Open Data](https://cms.cern/news/first-cms-open-data-lhc-run-2-released) in this demonstration to showcase an analysis pipeline. The input `.root` files are located in the  `nanoAODschema.json`.
+Analysis structure is almost the same except this time the files are  We are using [2015 CMS Open Data](https://cms.cern/news/first-cms-open-data-lhc-run-2-released) in this demonstration to showcase an analysis pipeline. The input `.root` files are located in the  `file.json`.
 The current coffea AGC version defines the coffea Processor, which includes a lot of the physics analysis details:
 - event filtering and the calculation of observables,
 - event weighting,
@@ -35,7 +18,7 @@ The current coffea AGC version defines the coffea Processor, which includes a lo
 
 The analysis takes the following inputs:
 
-- ``nanoAODschema.json`` input `.root` files
+- ``file_inputs_servicex.json`` input `.root` files
 - ``Snakefile`` The Snakefile for 
 - ``ttbar_analysis_reana.ipynb`` The main notebook file where files are processed and analysed.
 - ``file_merging.ipynb`` Notebook to merge each processed `.root` file in one file with unique keys.

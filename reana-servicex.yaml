@@ -1,0 +1,19 @@
+version: 0.6.0
+inputs:
+  files:
+    - fix-env.sh
+    - servicex.yaml
+    - AGC_ServiceX_query.ipynb
+    - nanoaod_inputs.json
+  directories:
+    - utils
+  parameters:
+    notebook: AGC_ServiceX_query.ipynb
+workflow:
+  type: serial 
+  specification:
+    steps:
+      - name: ServiceX-AGC External Data Request
+        environment: "povstenandrii/servicex-image:20240618"
+        commands:
+         - /bin/bash -l && source fix-env.sh && papermill ${notebook} ServiceX_output_data.ipynb -k python3
