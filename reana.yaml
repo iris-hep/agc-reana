@@ -9,6 +9,7 @@ inputs:
     - file_merging.ipynb
     - final_merging.ipynb
     - prepare_workspace.py
+    - cabinetry_config.yml
 
   directories:
     - histograms
@@ -20,4 +21,4 @@ workflow:
   file: Snakefile
 outputs:
   files:
-    - histograms_merged.root
+    - workspace.json
